@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Price History</title>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        body {
+            display: flex;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #sidebar {
+            width: 350px;
+            min-width: 350px;
+            padding: 20px;
+            background: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #time-slider-container {
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        #time-slider {
+            width: 100%;
+        }
+
+        #product-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            max-height: calc(100vh - 120px);
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            padding-right: 4px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            cursor: pointer;
+            padding: 10px;
+            background: #ddd;
+            margin: 0;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+
+        li:hover {
+            background: #bbb;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #chart-header {
+            text-align: center;
+        }
+
+        #chart-container {
+            flex-grow: 1;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebar">
+        <div class="panel-header">
+            <h3 class="mb-3">DI Price Log</h3>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal"
+                data-bs-target="#resetConfirmModal">Reset</button>
+        </div>
+        <div id="time-slider-container">
+            <label for="time-slider">Starting Date:</label>
+            <input type="range" id="time-slider" min="1" max="30" value="7" oninput="updateTimeRange()">
+            <span id="time-slider-value">7 days</span>
+        </div>
+        <input type="text" id="search-box" class="form-control mb-3" placeholder="Search products..."
+            onkeyup="filterProducts()">
+        <ul id="product-list"></ul>
+    </div>
+    <div id="chart-container">
+        <h4 id="chart-header" class="my-5"></h4>
+        <canvas id="priceChart"></canvas>
+    </div>
+
+    <div class="modal fade" id="resetConfirmModal" tabindex="-1" aria-labelledby="resetConfirmModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resetConfirmModalLabel">Reset Database</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Do you really want to reset the database?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal"
+                        id="reset_confirmed">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script>
+        let chart = null;
+        let productNames = [];
+        let timeRangeDays = 7;
+
+        async function fetchProducts() {
+            const res = await fetch('/api/products');
+            productNames = await res.json();
+            updateProductList(productNames);
+            document.getElementById("reset_confirmed").onclick = async () => {
+                const res = await fetch('/api/reset');
+                reset = await res.json();
+                console.log(reset)
+            }
+        }
+
+        function updateProductList(products) {
+            const list = document.getElementById('product-list');
+            list.innerHTML = '';
+            products.forEach(product => {
+                const li = document.createElement('li');
+                li.textContent = product;
+                li.onclick = () => {
+                    document.querySelectorAll('#product-list li').forEach(item => item.classList.remove('selected'));
+                    li.classList.add('selected');
+                    loadProductData(product);
+                };
+                list.appendChild(li);
+            });
+        }
+
+        async function loadProductData(productName) {
+            try {
+                document.getElementById('chart-header').innerText = productName;
+                const res = await fetch(`/api/prices?name=${encodeURIComponent(productName)}`);
+
+                if (!res.ok) {
+                    throw new Error(`HTTP error! Status: ${res.status}`);
+                }
+
+                const data = await res.json();
+                if (!data || data.length === 0) {
+                    console.warn(`No price data found for ${productName}`);
+                    return;
+                }
+
+                const minTime = new Date();
+                minTime.setDate(minTime.getDate() - timeRangeDays);
+
+                const labels = data.map(p => new Date(p.timestamp));
+                const prices = data.map(p => p.price);
+                const maxPrice = Math.max(...prices)
+
+                if (chart !== null) {
+                    chart.destroy();
+                }
+
+                const ctx = document.getElementById('priceChart').getContext('2d');
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: productName + ' Price',
+                            data: prices,
+                            borderColor: 'red',
+                            fill: false,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                // type: 'time',
+                                type: 'timeseries',
+                                time: { unit: 'day' },
+                                min: minTime.getTime(),
+                                max: new Date().valueOf()
+                            },
+                            y: {
+                                min: 0,
+                                max: Math.round(maxPrice + maxPrice * 0.5, 0)
+                            }
+                        },
+                        animation: false,
+                        spanGaps: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading product data:", error);
+            }
+        }
+
+
+        function filterProducts() {
+            const searchValue = document.getElementById('search-box').value.toLowerCase();
+            document.querySelectorAll('#product-list li').forEach(li => {
+                if (li.textContent.toLowerCase().includes(searchValue)) {
+                    li.classList.remove('hidden');
+                } else {
+                    li.classList.add('hidden');
+                }
+            });
+        }
+
+        function updateTimeRange() {
+            timeRangeDays = parseInt(document.getElementById('time-slider').value, 10);
+            document.getElementById('time-slider-value').textContent = `${timeRangeDays} days`;
+
+            const selected = document.querySelector('#product-list li.selected');
+            if (selected) loadProductData(selected.textContent);
+        }
+
+        setInterval(() => {
+            const selected = document.querySelector('#product-list li.selected');
+            if (selected) loadProductData(selected.textContent);
+        }, 10 * 60 * 1000); // in milliseconds
+
+        fetchProducts();
+    </script>
+</body>
+
+</html>
