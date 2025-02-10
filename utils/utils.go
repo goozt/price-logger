@@ -31,8 +31,8 @@ func getEnv(key, fallback string) string {
 func GetEnvironment() Environment {
 	godotenv.Load()
 	return Environment{
-		Host:     getEnv("HOST", "localhost"),
-		Port:     getEnv("POST", "9000"),
+		Host:     getEnv("DB_HOST", "localhost"),
+		Port:     getEnv("DB_PORT", "9000"),
 		Database: getEnv("DATABASE", "default"),
 		Username: getEnv("DB_USERNAME", "default"),
 		Password: getEnv("DB_PASSWORD", "password"),
