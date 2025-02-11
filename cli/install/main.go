@@ -25,7 +25,7 @@ func main() {
 			os.Exit(1)
 		} else {
 			exec.Command("systemctl", "enable", "diplogger").Run()
-			fmt.Println("DI Price Logger installed")
+			fmt.Println("Installation complete")
 		}
 	} else {
 		fmt.Println("Access denied. Need root access.")
