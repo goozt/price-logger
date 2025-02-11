@@ -22,13 +22,17 @@ var wishlist_urls = []string{
 func main() {
 	flag.StringVar(&host, "host", "localhost", "Hostname")
 	flag.StringVar(&port, "port", "8888", "Port number")
+	web_only := flag.Bool("web", false, "Run only web server")
+	flag.Parse()
 
-	go func() {
-		for {
-			parser.SaveToDB(wishlist_urls)
-			time.Sleep(time.Hour)
-		}
-	}()
+	if !*web_only {
+		go func() {
+			for {
+				parser.SaveToDB(wishlist_urls)
+				time.Sleep(time.Hour)
+			}
+		}()
+	}
 
 	server := &http.Server{Addr: ":" + port}
 
@@ -36,6 +40,7 @@ func main() {
 	http.HandleFunc("/api/products", productsHandler)
 	http.HandleFunc("/api/prices", pricesHandler)
 	http.HandleFunc("/api/reset", resetHandler)
+	http.HandleFunc("/api/new", newDataHandler)
 
 	shutdownChan := make(chan bool, 1)
 	go func() {

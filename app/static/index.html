@@ -47,12 +47,6 @@
             padding-right: 4px;
         }
 
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
         ul {
             list-style: none;
             padding: 0;
@@ -76,35 +70,70 @@
             display: none;
         }
 
-        #chart-header {
-            text-align: center;
-        }
-
         #chart-container {
             flex-grow: 1;
             padding: 20px;
+        }
+
+        #chart-header-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #chart-price {
+            text-align: center;
+            margin-left: 3rem;
+            margin-right: 3rem;
+            padding: 1rem;
+            border: 1px solid grey;
+            background-color: green;
+            color: white;
+            font-weight: bold;
+            border-radius: 10px;
+        }
+
+        .form-toggle-chart:checked {
+            background-color: #ffbb00;
+            border-color: #ffbb00;
         }
     </style>
 </head>
 
 <body>
     <div id="sidebar">
-        <div class="panel-header">
-            <h3 class="mb-3">DI Price Log</h3>
-            <button type="button" class="btn btn-danger" data-bs-toggle="modal"
-                data-bs-target="#resetConfirmModal">Reset</button>
+        <div>
+            <h3 class="mb-3 w-100">DI Price Log</h3>
+            <div id="panel-buttons" class="mb-3">
+                <button type="button" class="btn btn-primary btn-md" onclick="fetchNewData();">New Data</button>
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal"
+                    data-bs-target="#resetConfirmModal">Reset</button>
+            </div>
         </div>
-        <div id="time-slider-container">
+        <div id="toggle-panel" class="mb-3">
+            <div class="form-check form-switch">
+                <input class="form-check-input form-toggle-chart" type="checkbox" role="switch" id="toggleChart">
+                <label class="form-check-label" for="toggleChart" id="toggleChartLabel">Time Series Chart</label>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="toggleXRange">
+                <label class="form-check-label" for="toggleXRange" id="toggleXRangeLabel">Use timestamp</label>
+            </div>
+        </div>
+        <div id="time-slider-container" class="hidden">
             <label for="time-slider">Starting Date:</label>
-            <input type="range" id="time-slider" min="1" max="30" value="7" oninput="updateTimeRange()">
-            <span id="time-slider-value">7 days</span>
+            <input type="range" id="time-slider" min="0.5" max="30" value="1" step="0.5" oninput="updateTimeRange()">
+            <span id="time-slider-value">1 days</span>
         </div>
         <input type="text" id="search-box" class="form-control mb-3" placeholder="Search products..."
             onkeyup="filterProducts()">
         <ul id="product-list"></ul>
     </div>
     <div id="chart-container">
-        <h4 id="chart-header" class="my-5"></h4>
+        <div id="chart-header-section">
+            <h4 id="chart-header" class="my-5"></h4>
+            <h5 id="chart-price" class="my-5">Select product</h5>
+        </div>
         <canvas id="priceChart"></canvas>
     </div>
 
@@ -122,7 +151,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-danger" data-bs-dismiss="modal"
-                        id="reset_confirmed">Reset</button>
+                        onclick="resetData();">Reset</button>
                 </div>
             </div>
         </div>
@@ -132,56 +161,95 @@
         crossorigin="anonymous"></script>
     <script>
         let chart = null;
+        let chartType = 'timeseries';
+        let chartUnit = 'day';
+        let chartXRange = 'timestamp';
         let productNames = [];
-        let timeRangeDays = 7;
+        let timeRangeDays = 1;
+
+        async function fetchNewData() {
+            const res = await fetch('/api/new');
+            if (!res.ok) {
+                throw new Error(`HTTP error! Status: ${res.status}`);
+            }
+            const data = await res.json();
+            if (!data || data.length === 0) {
+                console.warn(`No price data found for ${productName}`);
+                return;
+            }
+            fetchProducts()
+        }
 
         async function fetchProducts() {
             const res = await fetch('/api/products');
             productNames = await res.json();
             updateProductList(productNames);
-            document.getElementById("reset_confirmed").onclick = async () => {
-                const res = await fetch('/api/reset');
-                reset = await res.json();
-                console.log(reset)
-            }
         }
 
         function updateProductList(products) {
             const list = document.getElementById('product-list');
             list.innerHTML = '';
-            products.forEach(product => {
-                const li = document.createElement('li');
-                li.textContent = product;
-                li.onclick = () => {
-                    document.querySelectorAll('#product-list li').forEach(item => item.classList.remove('selected'));
-                    li.classList.add('selected');
-                    loadProductData(product);
-                };
-                list.appendChild(li);
-            });
+            if (products != null) {
+                products.forEach(product => {
+                    const li = document.createElement('li');
+                    li.textContent = product;
+                    li.onclick = () => {
+                        document.querySelectorAll('#product-list li').forEach(item => item.classList.remove('selected'));
+                        li.classList.add('selected');
+                        loadProductData(product);
+                    };
+                    list.appendChild(li);
+                });
+            } else {
+                list.textContent = "No data found"
+            }
+        }
+
+        function getMaxYValue(prices) {
+            let value = Math.max(...prices)
+            value = value + value * 0.5
+            const slabs = [1, 2, 3, 4, 5, 7.5, 10, 15, 20, 25, 50, 75, 100].map(x => x * 1000)
+            for (idx in slabs) if ((value) < slabs[idx]) return slabs[idx];
+            return Math.round(value / 1000) * 1000
+        }
+
+        function updateTimeRange() {
+            timeRangeDays = parseFloat(document.getElementById('time-slider').value);
+            document.getElementById('time-slider-value').textContent = `${timeRangeDays} days`;
+            reloadProduct()
         }
 
         async function loadProductData(productName) {
             try {
-                document.getElementById('chart-header').innerText = productName;
+                document.getElementById('chart-header').textContent = productName;
                 const res = await fetch(`/api/prices?name=${encodeURIComponent(productName)}`);
 
                 if (!res.ok) {
                     throw new Error(`HTTP error! Status: ${res.status}`);
                 }
 
-                const data = await res.json();
+                let data = await res.json();
                 if (!data || data.length === 0) {
                     console.warn(`No price data found for ${productName}`);
                     return;
                 }
 
-                const minTime = new Date();
-                minTime.setDate(minTime.getDate() - timeRangeDays);
-
+                data.sort((a, b) => a.timestamp > b.timestamp);
+                const reversedData = [...data].reverse();
                 const labels = data.map(p => new Date(p.timestamp));
                 const prices = data.map(p => p.price);
-                const maxPrice = Math.max(...prices)
+                const currency = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2 })
+                document.getElementById('chart-price').textContent = "₹" + currency.format(reversedData[0].price.toFixed(2));
+
+                const yMaxRange = getMaxYValue(prices)
+                let xMinRange = data[0].timestamp
+                let xMaxRange = reversedData[0].timestamp
+                if (chartXRange != 'timestamp') {
+                    const now = new Date()
+                    xMaxRange = now.valueOf() + 0.5
+                    now.setDate(now.getDate() - timeRangeDays)
+                    xMinRange = now.getTime()
+                }
 
                 if (chart !== null) {
                     chart.destroy();
@@ -204,15 +272,22 @@
                         responsive: true,
                         scales: {
                             x: {
-                                // type: 'time',
-                                type: 'timeseries',
-                                time: { unit: 'day' },
-                                min: minTime.getTime(),
-                                max: new Date().valueOf()
+                                type: chartType,
+                                time: {
+                                    unit: chartUnit,
+                                    minUnit: 'hour',
+                                    displayFormats: {
+                                        hour: 'MMM DD hh:mm a',
+                                        day: 'MMM DD hh:mm a'
+                                    }
+                                },
+                                min: xMinRange,
+                                max: xMaxRange,
+                                ticks: { major: { enabled: true } }
                             },
                             y: {
                                 min: 0,
-                                max: Math.round(maxPrice + maxPrice * 0.5, 0)
+                                max: yMaxRange
                             }
                         },
                         animation: false,
@@ -229,6 +304,15 @@
             }
         }
 
+        function toggle(handle, a, b) {
+            return (handle == a) ? b : a
+        }
+
+        function reloadProduct() {
+            const selected = document.querySelector('#product-list li.selected');
+            if (selected) loadProductData(selected.textContent);
+        }
+
 
         function filterProducts() {
             const searchValue = document.getElementById('search-box').value.toLowerCase();
@@ -241,12 +325,11 @@
             });
         }
 
-        function updateTimeRange() {
-            timeRangeDays = parseInt(document.getElementById('time-slider').value, 10);
-            document.getElementById('time-slider-value').textContent = `${timeRangeDays} days`;
-
-            const selected = document.querySelector('#product-list li.selected');
-            if (selected) loadProductData(selected.textContent);
+        async function resetData() {
+            const res = await fetch('/api/reset');
+            reset = await res.json();
+            console.warn(reset)
+            reloadProduct()
         }
 
         setInterval(() => {
@@ -255,6 +338,32 @@
         }, 10 * 60 * 1000); // in milliseconds
 
         fetchProducts();
+
+        document.getElementById("toggleChart").onchange = async () => {
+            if (chart !== null) {
+                chart.destroy();
+            }
+            let label = document.getElementById("toggleChartLabel");
+            chartType = toggle(chartType, 'time', 'timeseries')
+            chartUnit = toggle(chartUnit, 'hour', 'day')
+            label.textContent = toggle(label.textContent, 'Time Cartesian Chart', 'Time Series Chart')
+            reloadProduct()
+        }
+        document.getElementById("toggleXRange").onchange = async (e) => {
+            if (chart !== null) {
+                chart.destroy();
+            }
+            const slider = document.getElementById("time-slider-container");
+            if (e.target.checked) {
+                chartXRange = 'timerange'
+                slider.classList.remove('hidden');
+            } else {
+                chartXRange = 'timestamp'
+                slider.classList.add('hidden');
+            }
+            document.getElementById("toggleXRangeLabel").textContent = 'Use ' + chartXRange
+            reloadProduct()
+        }
     </script>
 </body>
 

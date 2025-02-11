@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"dilogger/internal/db"
+	"dilogger/internal/parser"
 	"embed"
 	"encoding/json"
 	"log"
@@ -19,7 +20,6 @@ var tplFolder embed.FS
 
 var conn = db.ConnectDB("dilogger")
 
-// Get unique product names
 func getUniqueProducts() []string {
 	unique := make(map[string]bool)
 	var productList []string
@@ -39,6 +39,12 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	println("Embedded the index.html file")
 	tmpl.Execute(w, nil)
+}
+
+func newDataHandler(w http.ResponseWriter, r *http.Request) {
+	parser.SaveToDB(wishlist_urls)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(struct{ NewData bool }{true})
 }
 
 func resetHandler(w http.ResponseWriter, r *http.Request) {
