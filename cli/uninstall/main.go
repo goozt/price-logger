@@ -7,6 +7,7 @@ import (
 	"os/exec"
 )
 
+// The main function checks if the user has sudo privileges and stops and disables a service if so.
 func main() {
 	if utils.IsSUDO() {
 		exec.Command("systemctl", "stop", "diplogger").Run()

@@ -13,6 +13,7 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
+// The GetProducts function concurrently fetches and parses product data from multiple URLs using goroutines and channels.
 func GetProducts(urls []string) (products []db.Product) {
 
 	var wg sync.WaitGroup
@@ -35,6 +36,7 @@ func GetProducts(urls []string) (products []db.Product) {
 	return
 }
 
+// The Parse function reads HTML content from a given URL, parses it to extract table rows, and sends each row to a channel for further processing.
 func Parse(ch chan db.Product, wg *sync.WaitGroup, url string) {
 	defer wg.Done()
 	body, err := utils.GetHTML(url)
@@ -59,6 +61,7 @@ func Parse(ch chan db.Product, wg *sync.WaitGroup, url string) {
 	}
 }
 
+// The ParseRow function extracts product information from an HTML row and returns a db.Product struct.
 func ParseRow(row *html.Node) db.Product {
 	var name string
 	var stock int
@@ -99,6 +102,7 @@ func ParseRow(row *html.Node) db.Product {
 	}
 }
 
+// The function `SaveToDB` saves products obtained from a list of URLs to a database after connecting and creating a table.
 func SaveToDB(urls []string) {
 	conn := db.ConnectDB("dilogger")
 	conn.CreateTable()

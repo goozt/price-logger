@@ -11,6 +11,7 @@ import (
 
 const dst_dir = "/opt/dilogger"
 
+// The main function connects to a database, checks for root access, installs a service, copies files, starts and enables the service, and prints installation completion message.
 func main() {
 	db.ConnectDB("dilogger")
 	if utils.IsSUDO() {
@@ -32,6 +33,7 @@ func main() {
 	}
 }
 
+// The `installService` function creates a systemd service file for a Design Info Price Logger application.
 func installService() {
 	content := `[Unit]
 Description=Design Info Price Logger

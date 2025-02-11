@@ -19,6 +19,7 @@ var wishlist_urls = []string{
 	"https://www.designinfo.in/wishlist/view/da0c1e/",
 }
 
+// The main function sets up a web server with various handlers and options, including a background process for saving data to a database periodically.
 func main() {
 	flag.StringVar(&host, "host", "localhost", "Hostname")
 	flag.StringVar(&port, "port", "8888", "Port number")

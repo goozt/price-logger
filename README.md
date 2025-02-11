@@ -6,12 +6,11 @@ This is used for scrappering data from Wishlist at designinfo.in. Using this dat
 
 - ClickHouse DB Server
   - .env file variables: DB_HOST, DB_PORT, DATABASE, DB_USERNAME, DB_PASSWORD
-- goDotEnv module
 
 ### Installation
 
 ```
-make build
-cd dist
-sudo ./install
+make install
 ```
+
+The app will be available at http://localhost:8888
