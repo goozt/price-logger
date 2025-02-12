@@ -1,13 +1,19 @@
 package utils
 
 import (
+	"context"
+	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -31,8 +37,7 @@ func getEnv(key, fallback string) string {
 }
 
 // The GetEnvironment function loads environment variables and returns a struct containing database connection details with default values if not set.
-func GetEnvironment() Environment {
-	godotenv.Load()
+func GetDBEnvironment() Environment {
 	return Environment{
 		Host:     getEnv("DB_HOST", "localhost"),
 		Port:     getEnv("DB_PORT", "9000"),
@@ -69,4 +74,25 @@ func CopyFile(src, dst string) {
 		fmt.Println("Unable to copy files")
 		os.Exit(1)
 	}
+}
+
+// The `handleShutdown` function gracefully shuts down an HTTP server upon receiving specific signals.
+func HandleShutdown(server *http.Server) {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGTSTP)
+	<-sigChan
+
+	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownRelease()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Fatalf("HTTP shutdown error: %v", err)
+	}
+}
+
+func LoadENV(host, port *string, web *bool) {
+	godotenv.Load()
+	flag.StringVar(host, "host", "localhost", "Hostname")
+	flag.StringVar(port, "port", "8888", "Port number")
+	flag.BoolVar(web, "web", false, "Run only web server")
+	flag.Parse()
 }

@@ -1,18 +1,13 @@
 package main
 
 import (
-	"context"
 	"dilogger/internal/db"
 	"dilogger/internal/parser"
 	"embed"
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"text/template"
-	"time"
 )
 
 //go:embed static
@@ -74,17 +69,4 @@ func pricesHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	json.NewEncoder(w).Encode(priceData)
-}
-
-// The `handleShutdown` function gracefully shuts down an HTTP server upon receiving specific signals.
-func handleShutdown(server *http.Server) {
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGTSTP)
-	<-sigChan
-
-	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
-	defer shutdownRelease()
-	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("HTTP shutdown error: %v", err)
-	}
 }

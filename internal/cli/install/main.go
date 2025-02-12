@@ -2,7 +2,7 @@ package main
 
 import (
 	"dilogger/internal/db"
-	"dilogger/utils"
+	"dilogger/internal/utils"
 	"fmt"
 	"log"
 	"os"

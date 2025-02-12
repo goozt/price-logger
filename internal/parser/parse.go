@@ -2,7 +2,7 @@ package parser
 
 import (
 	"dilogger/internal/db"
-	"dilogger/utils"
+	"dilogger/internal/utils"
 	"log"
 	"strconv"
 	"strings"
@@ -24,6 +24,7 @@ func GetProducts(urls []string) (products []db.Product) {
 		go Parse(ch, &wg, url)
 	}
 
+	// This block is creating an anonymous goroutine that reads from the channel `ch` and appends the received `db.Product` objects to the `products` slice.
 	go func() {
 		for product := range ch {
 			products = append(products, product)

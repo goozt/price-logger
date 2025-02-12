@@ -2,16 +2,17 @@ package main
 
 import (
 	"dilogger/internal/parser"
+	"dilogger/internal/utils"
 	"errors"
-	"flag"
 	"log"
 	"net/http"
 	"time"
 )
 
 var (
-	host string
-	port string
+	host     string
+	port     string
+	web_only bool
 )
 
 var wishlist_urls = []string{
@@ -21,12 +22,9 @@ var wishlist_urls = []string{
 
 // The main function sets up a web server with various handlers and options, including a background process for saving data to a database periodically.
 func main() {
-	flag.StringVar(&host, "host", "localhost", "Hostname")
-	flag.StringVar(&port, "port", "8888", "Port number")
-	web_only := flag.Bool("web", false, "Run only web server")
-	flag.Parse()
+	utils.LoadENV(&host, &port, &web_only)
 
-	if !*web_only {
+	if !web_only {
 		go func() {
 			for {
 				parser.SaveToDB(wishlist_urls)
@@ -52,6 +50,6 @@ func main() {
 		shutdownChan <- true
 	}()
 
-	handleShutdown(server)
+	utils.HandleShutdown(server)
 	<-shutdownChan
 }

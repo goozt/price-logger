@@ -2,7 +2,7 @@ package db
 
 import (
 	"context"
-	"dilogger/utils"
+	"dilogger/internal/utils"
 	"fmt"
 	"log"
 	"time"
@@ -28,7 +28,7 @@ type Connection struct {
 
 // The function `getOptions` returns a pointer to a `clickhouse.Options` struct with environment-specific configuration values.
 func getOptions() *clickhouse.Options {
-	env := utils.GetEnvironment()
+	env := utils.GetDBEnvironment()
 	return &clickhouse.Options{
 		Addr: []string{fmt.Sprintf("%s:%s", env.Host, env.Port)},
 		Auth: clickhouse.Auth{
@@ -80,6 +80,18 @@ func (c *Connection) GetList() (products []Product) {
 		context.Background(),
 		&products,
 		"SELECT Timestamp,Name,Stock,Price FROM "+c.dbname,
+	); err != nil {
+		log.Fatal(err)
+	}
+	return
+}
+
+// The `GetList` method is responsible for fetching a list of `Product` structs from the ClickHouse database.
+func (c *Connection) GetRecentList() (products []Product) {
+	if err := c.conn.Select(
+		context.Background(),
+		&products,
+		"SELECT Timestamp,Name,Stock,Price FROM "+c.dbname+"",
 	); err != nil {
 		log.Fatal(err)
 	}

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"dilogger/utils"
+	"dilogger/internal/utils"
 	"fmt"
 	"os"
 	"os/exec"
