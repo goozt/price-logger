@@ -1,0 +1,86 @@
+body {
+  display: flex;
+  font-family: Arial, sans-serif;
+  height: 100vh;
+  margin: 0;
+}
+
+#sidebar {
+  width: 350px;
+  min-width: 350px;
+  padding: 20px;
+  background: #f4f4f4;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+#time-slider-container {
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+#time-slider {
+  width: 100%;
+}
+
+#product-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  padding-right: 4px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  cursor: pointer;
+  padding: 10px;
+  background: #ddd;
+  margin: 0;
+  margin-bottom: 5px;
+  border-radius: 5px;
+}
+
+li:hover {
+  background: #bbb;
+}
+
+.hidden {
+  display: none;
+}
+
+#chart-container {
+  flex-grow: 1;
+  padding: 20px;
+}
+
+#chart-header-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#chart-price {
+  text-align: center;
+  margin-left: 3rem;
+  margin-right: 3rem;
+  padding: 1rem;
+  border: 1px solid grey;
+  background-color: green;
+  color: white;
+  font-weight: bold;
+  border-radius: 10px;
+}
+
+.form-toggle-chart:checked {
+  background-color: #ffbb00;
+  border-color: #ffbb00;
+}

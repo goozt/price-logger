@@ -1,3 +1,8 @@
+run:
+	@go run ./app -port 8899 -web
+reset:
+	@go run ./internal/cli/reset
+
 build:
 	@rm -rf ./dist/
 	@go build -C app -o ../dist/

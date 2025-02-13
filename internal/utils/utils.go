@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -14,8 +13,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/joho/godotenv"
 )
 
 // The `Environment` type in Go represents configuration settings for a host, port, database, username, and password.
@@ -27,8 +24,8 @@ type Environment struct {
 	Password string
 }
 
-// The `getEnv` function retrieves the value of an environment variable or returns a fallback value if the variable is not set.
-func getEnv(key, fallback string) string {
+// The `GetEnv` function retrieves the value of an environment variable or returns a fallback value if the variable is not set.
+func GetEnv(key, fallback string) string {
 	value := os.Getenv(key)
 	if len(value) == 0 {
 		return fallback
@@ -39,11 +36,11 @@ func getEnv(key, fallback string) string {
 // The GetEnvironment function loads environment variables and returns a struct containing database connection details with default values if not set.
 func GetDBEnvironment() Environment {
 	return Environment{
-		Host:     getEnv("DB_HOST", "localhost"),
-		Port:     getEnv("DB_PORT", "9000"),
-		Database: getEnv("DATABASE", "default"),
-		Username: getEnv("DB_USERNAME", "default"),
-		Password: getEnv("DB_PASSWORD", "password"),
+		Host:     GetEnv("DB_HOST", "localhost"),
+		Port:     GetEnv("DB_PORT", "9000"),
+		Database: GetEnv("DATABASE", "default"),
+		Username: GetEnv("DB_USERNAME", "default"),
+		Password: GetEnv("DB_PASSWORD", "password"),
 	}
 }
 
@@ -87,12 +84,4 @@ func HandleShutdown(server *http.Server) {
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Fatalf("HTTP shutdown error: %v", err)
 	}
-}
-
-func LoadENV(host, port *string, web *bool) {
-	godotenv.Load()
-	flag.StringVar(host, "host", "localhost", "Hostname")
-	flag.StringVar(port, "port", "8888", "Port number")
-	flag.BoolVar(web, "web", false, "Run only web server")
-	flag.Parse()
 }

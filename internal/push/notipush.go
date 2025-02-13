@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/OneSignal/onesignal-go-api/v2"
 	"github.com/google/uuid"
@@ -19,9 +20,11 @@ type Output struct {
 }
 
 var (
-	client  = onesignal.NewAPIClient(onesignal.NewConfiguration())
-	authCtx = context.WithValue(context.Background(), onesignal.UserAuth, os.Getenv("OS_APP_KEY"))
-	appId   = os.Getenv("OS_APP_ID")
+	client      = onesignal.NewAPIClient(onesignal.NewConfiguration())
+	authCtx     = context.WithValue(context.Background(), onesignal.UserAuth, os.Getenv("OS_APP_KEY"))
+	appId       = os.Getenv("OS_APP_ID")
+	template_id = os.Getenv("OS_TEMPLATE_ID")
+	segments    = strings.Split(os.Getenv("OS_SEGMENT"), ",")
 )
 
 // The `SendNotification` function sends a push notification using OneSignal with custom data and verifies the notification's external ID.
@@ -32,8 +35,8 @@ func SendNotification(data db.Product) {
 	noti.SetExternalId(eid)
 	noti.SetIsIos(false)
 	noti.SetName("API Notification")
-	noti.SetTemplateId("0bcfe003-96f2-4cff-9615-43ec4cd0d035")
-	noti.SetIncludedSegments([]string{"Total Subscriptions"})
+	noti.SetTemplateId(template_id)
+	noti.SetIncludedSegments(segments)
 	_data, _ := json.Marshal(data)
 	json.Unmarshal(_data, &input)
 	noti.SetCustomData(input)

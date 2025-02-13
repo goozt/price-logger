@@ -96,16 +96,16 @@ func ParseRow(row *html.Node) db.Product {
 	name = nslist[0]
 	stock, _ = strconv.Atoi(strings.Replace(nslist[1], " in stock", "", 1))
 	return db.Product{
-		Timestamp: time.Now(),
 		Name:      name,
 		Stock:     int32(stock),
 		Price:     float64(price),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 }
 
 // The function `SaveToDB` saves products obtained from a list of URLs to a database after connecting and creating a table.
-func SaveToDB(urls []string) {
-	conn := db.ConnectDB("dilogger")
+func SaveToDB(conn db.Connection, urls []string) {
 	conn.CreateTable()
 	products := GetProducts(urls)
 	conn.InsertMultiple(products)
