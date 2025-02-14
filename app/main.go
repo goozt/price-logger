@@ -60,10 +60,7 @@ func ProductLogging(urls []string) {
 
 // The InitServer function initializes a server with optional web server functionality and product logging.
 func InitServer(urls []string) *http.Server {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalln(err)
-	}
+	godotenv.Load()
 	conn = db.ConnectDB(utils.GetEnv("DB_TABLE", "dilogger"))
 
 	port = flag.String("port", "8888", "Port number")
