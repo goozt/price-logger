@@ -6,7 +6,6 @@ let timeRangeDays = 1;
 let selectedProduct = "";
 let urlCheckboxSelected = [];
 const refreshRate = 60; // minutes
-const pb = new PocketBase("http://127.0.0.1:8090");
 const toggle = (handle, a, b) => (handle == a ? b : a);
 const destroyChart = () => (chart !== null ? chart.destroy() : null);
 const newItem = (item, time) => ({ price: item.price, time });

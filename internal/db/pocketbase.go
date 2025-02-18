@@ -6,6 +6,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/security"
 	"github.com/pocketbase/pocketbase/tools/types"
 )
 
@@ -58,6 +59,7 @@ func NewCollection(name string, args ...any) *core.Collection {
 			Required: true,
 			Values:   []string{"wishlist", "product"},
 		})
+		collection.AddIndex("idx_"+security.RandomString(10), true, "url", "")
 	}
 	collection.Fields.Add(&core.AutodateField{
 		Name:     "created",

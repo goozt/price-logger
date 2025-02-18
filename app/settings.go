@@ -37,7 +37,10 @@ func AddPaths(s *db.Server, htmlFS fs.FS, staticFS fs.FS, reload func(server *db
 				"pb_public/html/settings.html",
 				"pb_public/html/login.html",
 				"pb_public/html/index.html",
-			).Render(struct{}{})
+			).Render(map[string]string{
+				"title":  utils.GetEnv("PB_APP_NAME", "Price Logger"),
+				"apiUrl": utils.GetEnv("PB_APP_URL", "http://localhost:8090"),
+			})
 			if err != nil {
 				return e.NotFoundError("", err)
 			}

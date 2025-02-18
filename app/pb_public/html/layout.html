@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DI Price History</title>
+    <title>{{.title}}</title>
     <link href="/static/bootstrap.min.css" rel="stylesheet">
     <link href="/static/main.css" rel="stylesheet">
     <link rel="shortcut icon" href="/static/icons/favicon.ico" type="image/x-icon">
@@ -19,6 +19,9 @@
     <script src="/static/chart.umd.js"></script>
     <script src="/static/chartjs-adapter-moment.js"></script>
     <script src="/static/pocketbase.umd.js"></script>
+    <script>
+        const pb = new PocketBase("{{.apiUrl}}");
+    </script>
     <script src="/static/main.js"></script>
 </body>
 
