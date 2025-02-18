@@ -1,9 +1,9 @@
 package parser
 
 import (
-	"dilogger/internal/db"
-	"dilogger/internal/utils"
+	"dilogger/internal/model"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,34 +13,14 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
-// The GetProducts function concurrently fetches and parses product data from multiple URLs using goroutines and channels.
-func GetProducts(urls []string) (products []db.Product) {
-
-	var wg sync.WaitGroup
-	ch := make(chan db.Product)
-
-	for _, url := range urls {
-		wg.Add(1)
-		go Parse(ch, &wg, url)
-	}
-
-	// This block is creating an anonymous goroutine that reads from the channel `ch` and appends the received `db.Product` objects to the `products` slice.
-	go func() {
-		for product := range ch {
-			products = append(products, product)
-		}
-	}()
-
-	wg.Wait()
-	close(ch)
-
-	return
-}
-
 // The Parse function reads HTML content from a given URL, parses it to extract table rows, and sends each row to a channel for further processing.
-func Parse(ch chan db.Product, wg *sync.WaitGroup, url string) {
+func Parse(ch chan model.Product, wg *sync.WaitGroup, url string) {
 	defer wg.Done()
-	body, err := utils.GetHTML(url)
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	body := resp.Body
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,8 +42,8 @@ func Parse(ch chan db.Product, wg *sync.WaitGroup, url string) {
 	}
 }
 
-// The ParseRow function extracts product information from an HTML row and returns a db.Product struct.
-func ParseRow(row *html.Node) db.Product {
+// The ParseRow function extracts product information from an HTML row and returns a model.Product struct.
+func ParseRow(row *html.Node) model.Product {
 	var name string
 	var stock int
 	var price float64
@@ -95,18 +75,11 @@ func ParseRow(row *html.Node) db.Product {
 
 	name = nslist[0]
 	stock, _ = strconv.Atoi(strings.Replace(nslist[1], " in stock", "", 1))
-	return db.Product{
+	return model.Product{
 		Name:      name,
 		Stock:     int32(stock),
 		Price:     float64(price),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-}
-
-// The function `SaveToDB` saves products obtained from a list of URLs to a database after connecting and creating a table.
-func SaveToDB(conn db.Connection, urls []string) {
-	conn.CreateTable()
-	products := GetProducts(urls)
-	conn.InsertMultiple(products)
 }

@@ -1,0 +1,40 @@
+{{define "settings"}}
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body d-flex">
+                <div id="settings-menu" class="list-group w-25">
+                    <button class=" settings-panel-button list-group-item list-group-item-action"
+                        data-section="settings-content-wishlist-urls">
+                        Wishlist URLs</button>
+                    <button class=" settings-panel-button list-group-item list-group-item-action"
+                        data-section="settings-content-about">
+                        About</button>
+                </div>
+                <div id="settings-content" class="w-75 p-3">
+                    <div id="settings-content-wishlist-urls" class="settings-section">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5>Wishlist URLs</h5>
+                            <button class="btn btn-danger hidden" id="delete-urls-btn">Delete</button>
+                        </div>
+                        <ul id="url-list" class="list-group mb-3"></ul>
+                        <form class="d-flex justify-content-between align-items-center" onSubmit="return false;">
+                            <input type="text" id="new-url" class="form-control me-2" type="url" required
+                                placeholder="Enter new URL">
+                            <button class="btn btn-primary" id="add-url-btn">Add</button>
+                        </form>
+                    </div>
+                    <div id="settings-content-about" class="settings-section hidden">
+                        <h5>About</h5>
+                        <p>&copy; 2025 Goozt.org</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -2,11 +2,10 @@ package push
 
 import (
 	"context"
-	"dilogger/internal/db"
+	"dilogger/internal/model"
+	"dilogger/internal/utils"
 	"encoding/json"
-	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/OneSignal/onesignal-go-api/v2"
@@ -19,29 +18,39 @@ type Output struct {
 	External_id string `json:"external_id"`
 }
 
-var (
-	client      = onesignal.NewAPIClient(onesignal.NewConfiguration())
-	authCtx     = context.WithValue(context.Background(), onesignal.UserAuth, os.Getenv("OS_APP_KEY"))
-	appId       = os.Getenv("OS_APP_ID")
-	template_id = os.Getenv("OS_TEMPLATE_ID")
-	segments    = strings.Split(os.Getenv("OS_SEGMENT"), ",")
-)
+type OneSignalApp struct {
+	id       string
+	client   *onesignal.APIClient
+	authCtx  context.Context
+	template string
+	segments []string
+}
 
-// The `SendNotification` function sends a push notification using OneSignal with custom data and verifies the notification's external ID.
-func SendNotification(data db.Product) {
+func NewNotificationApp() *OneSignalApp {
+	return &OneSignalApp{
+		utils.GetEnv("OS_APP_ID"),
+		onesignal.NewAPIClient(onesignal.NewConfiguration()),
+		context.WithValue(context.Background(), onesignal.UserAuth, utils.GetEnv("OS_APP_KEY")),
+		utils.GetEnv("OS_TEMPLATE_ID"),
+		strings.Split(utils.GetEnv("OS_SEGMENT"), ","),
+	}
+}
+
+// The `Send` function sends a push notification using OneSignal with custom data and verifies the notification's external ID.
+func (app *OneSignalApp) Send(data model.Product) {
 	var input map[string]any
-	noti := *onesignal.NewNotification(appId)
+	noti := *onesignal.NewNotification(app.id)
 	eid := uuid.New().String()
 	noti.SetExternalId(eid)
 	noti.SetIsIos(false)
 	noti.SetName("API Notification")
-	noti.SetTemplateId(template_id)
-	noti.SetIncludedSegments(segments)
+	noti.SetTemplateId(app.template)
+	noti.SetIncludedSegments(app.segments)
 	_data, _ := json.Marshal(data)
 	json.Unmarshal(_data, &input)
 	noti.SetCustomData(input)
 
-	_, r, err := client.DefaultApi.CreateNotification(authCtx).Notification(noti).Execute()
+	_, r, err := app.client.DefaultApi.CreateNotification(app.authCtx).Notification(noti).Execute()
 
 	if err != nil {
 		log.Fatalln(err)
@@ -56,5 +65,5 @@ func SendNotification(data db.Product) {
 	if out.External_id != eid {
 		log.Fatalln("Invalid notification")
 	}
-	fmt.Printf("Pushed notification: %s\n", out.Id)
+	log.Printf("Pushed notification: %s\n", out.Id)
 }

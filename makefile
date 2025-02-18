@@ -1,14 +1,25 @@
 run:
-	@go run ./app -port 8899 -web
+	@go run . serve
+
+init: reset
+	@go run . init
+
 reset:
-	@go run ./internal/cli/reset
+	@rm -rf ./pb_data ./dist
 
 build:
 	@rm -rf ./dist/
-	@go build -C app -o ../dist/
-	@go build -C cli/reset -o ../../dist/
-	@go build -C cli/install -o ../../dist/
-	@go build -C cli/uninstall -o ../../dist/
+	@go build -o ./dist/server
+	@go build -C internal/cli/install -o ../../../dist/
+	@go build -C internal/cli/uninstall -o ../../../dist/
+
+prod-build:
+	@rm -rf ./dist/
+	@go build -o ./server
+	@./server init
+
+prod-run:
+	@./server serve --http=0.0.0.0:8080 --encryptionEnv ${PB_DATA_ENCRYPTION_KEY}
 
 uninstall:
 	@cd dist && sudo ./uninstall

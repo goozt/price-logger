@@ -1,0 +1,54 @@
+{{define "body"}}
+<div id="sidebar">
+    <div class="d-flex justify-content-between align-items-center">
+        <h3 class="mb-3 w-100">DI Price History</h3>
+        <button id="settings-btn" class="btn btn-secondary box-button me-2" data-bs-toggle="modal"
+            data-bs-target="#settingsModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear"
+                viewBox="0 0 16 16">
+                <path
+                    d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0" />
+                <path
+                    d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z" />
+            </svg>
+        </button>
+        <button id="login-btn" class="btn btn-secondary box-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-fill"
+                viewBox="0 0 16 16">
+                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6" />
+            </svg>
+        </button>
+    </div>
+    <div class="welcome-user hidden">
+        <hr>
+        <h6 class="mt-2">
+            Welcome, <span id="username-tag"></span>
+        </h6>
+        <hr>
+    </div>
+    <div id="toggle-panel" class="mb-3">
+        <div class="form-check form-switch">
+            <input class="form-check-input form-toggle-chart" type="checkbox" role="switch" id="toggleChart">
+            <label class="form-check-label" for="toggleChart" id="toggleChartLabel">Time Series Chart</label>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="toggleXRange">
+            <label class="form-check-label" for="toggleXRange" id="toggleXRangeLabel">Use timestamp</label>
+        </div>
+    </div>
+    <div id="time-slider-container" class="hidden">
+        <label for="time-slider">Starting Date:</label>
+        <input type="range" id="time-slider" min="0.5" max="30" value="1" step="0.5">
+        <span id="time-slider-value">1 days</span>
+    </div>
+    <input type="text" id="search-box" class="form-control mb-3" placeholder="Search products...">
+    <ul id="product-list"></ul>
+</div>
+<div id="chart-container">
+    <div id="chart-header-section">
+        <h4 id="chart-header" class="my-5"></h4>
+        <h5 id="chart-price" class="my-5">Select product</h5>
+    </div>
+    <canvas id="priceChart"></canvas>
+</div>
+{{end}}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"dilogger/internal/db"
 	"dilogger/internal/utils"
 	"fmt"
 	"log"
@@ -13,7 +12,6 @@ const dst_dir = "/opt/dilogger"
 
 // The main function connects to a database, checks for root access, installs a service, copies files, starts and enables the service, and prints installation completion message.
 func main() {
-	db.ConnectDB(utils.GetEnv("DB_TABLE", "dilogger"))
 	if utils.IsSUDO() {
 		installService()
 		os.MkdirAll(dst_dir, 0755)

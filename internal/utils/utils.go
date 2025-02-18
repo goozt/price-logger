@@ -1,56 +1,24 @@
 package utils
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
-	"time"
 )
 
-// The `Environment` type in Go represents configuration settings for a host, port, database, username, and password.
-type Environment struct {
-	Host     string
-	Port     string
-	Database string
-	Username string
-	Password string
-}
-
 // The `GetEnv` function retrieves the value of an environment variable or returns a fallback value if the variable is not set.
-func GetEnv(key, fallback string) string {
-	value := os.Getenv(key)
+func GetEnv(key string, fallback ...string) string {
+	value := strings.TrimSpace(os.Getenv(key))
 	if len(value) == 0 {
-		return fallback
+		if len(fallback) < 1 {
+			log.Fatalf("error: Environtment variable '%s' not found", key)
+		}
+		return fallback[0]
 	}
 	return value
-}
-
-// The GetEnvironment function loads environment variables and returns a struct containing database connection details with default values if not set.
-func GetDBEnvironment() Environment {
-	return Environment{
-		Host:     GetEnv("DB_HOST", "localhost"),
-		Port:     GetEnv("DB_PORT", "9000"),
-		Database: GetEnv("DATABASE", "default"),
-		Username: GetEnv("DB_USERNAME", "default"),
-		Password: GetEnv("DB_PASSWORD", "password"),
-	}
-}
-
-// The GetHTML function retrieves the HTML content of a given URL and returns it as an io.ReadCloser along with any errors encountered.
-func GetHTML(url string) (io.ReadCloser, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Body, nil
 }
 
 // The IsSUDO function checks if the current process is running with root privileges.
@@ -70,18 +38,5 @@ func CopyFile(src, dst string) {
 		fmt.Println(err)
 		fmt.Println("Unable to copy files")
 		os.Exit(1)
-	}
-}
-
-// The `handleShutdown` function gracefully shuts down an HTTP server upon receiving specific signals.
-func HandleShutdown(server *http.Server) {
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGTSTP)
-	<-sigChan
-
-	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
-	defer shutdownRelease()
-	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("HTTP shutdown error: %v", err)
 	}
 }

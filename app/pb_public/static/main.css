@@ -15,6 +15,35 @@ body {
   height: 100vh;
 }
 
+.box-button {
+  padding: 2px 7px 5px;
+}
+
+#settings-menu {
+  border-right: 1px solid #ddd;
+  max-height: 80vh;
+  overflow-y: auto;
+  border-radius: 0;
+  padding-right: 1rem;
+  padding-top: 1rem;
+}
+
+#settings-content h5 {
+  margin-bottom: 1rem;
+}
+
+.settings-panel-button {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-top: var(--bs-list-group-border-width) solid
+    var(--bs-list-group-border-color) !important;
+  border-radius: 10px !important;
+}
+
+#url-list a {
+  color: #444 !important;
+}
+
 #time-slider-container {
   margin-bottom: 10px;
   text-align: center;
@@ -83,4 +112,9 @@ li:hover {
 .form-toggle-chart:checked {
   background-color: #ffbb00;
   border-color: #ffbb00;
+}
+
+li.selected {
+  background: #535079;
+  color: #ffffff;
 }
