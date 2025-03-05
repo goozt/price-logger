@@ -3,16 +3,13 @@ package app
 import (
 	"dilogger/internal/db"
 	"dilogger/internal/utils"
-	"errors"
 	"io/fs"
-	"net/http"
 	"slices"
 
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/tools/template"
 )
 
+// Customise settings
 func InitSettings(app core.App) {
 	settings := app.Settings()
 	settings.Meta.AppName = utils.GetEnv("PB_APP_NAME", "Price Logger")
@@ -27,46 +24,25 @@ func InitSettings(app core.App) {
 	}
 }
 
-func AddPaths(s *db.Server, htmlFS fs.FS, staticFS fs.FS, reload func(server *db.Server)) {
+// Add all routes onServe trigger
+func AddRoutes(s *db.Server, htmlFS fs.FS, staticFS fs.FS) {
 	s.OnServe().BindFunc(func(se *core.ServeEvent) error {
-		registry := template.NewRegistry()
-		se.Router.GET("/", func(e *core.RequestEvent) error {
-			html, err := registry.LoadFS(
-				htmlFS,
-				"pb_public/html/layout.html",
-				"pb_public/html/settings.html",
-				"pb_public/html/login.html",
-				"pb_public/html/index.html",
-			).Render(map[string]string{
-				"title":  utils.GetEnv("PB_APP_NAME", "Price Logger"),
-				"apiUrl": utils.GetEnv("PB_APP_URL", "http://localhost:8090"),
-			})
-			if err != nil {
-				return e.NotFoundError("", err)
-			}
-			return e.HTML(http.StatusOK, html)
-		})
-		staticFS, err := fs.Sub(staticFS, "pb_public/static")
-		if err != nil {
-			return errors.New("error: static directory missing")
-		}
-		se.Router.GET("/static/{path...}", apis.Static(staticFS, false))
-		se.Router.GET("/api/reload-data", func(e *core.RequestEvent) error {
-			reload(s)
-			return e.JSON(http.StatusOK, map[string]bool{
-				"reloaded": true,
-			})
-		})
+		AddStopRoute(se)
+		AddUIRoute(se, htmlFS)
+		AddStaticRoute(se, staticFS)
+		AddReloadRoute(se, s)
 		return se.Next()
 	})
 }
 
+// Add cron jobs
 func AddHourlyJob(s *db.Server, id string, Job func()) {
 	cron := s.Cron()
 	cron.MustAdd(id, "0 * * * *", func() { Job() })
 	cron.Start()
 }
 
+// Add monitoring functions
 func AddMonitor(s *db.Server) {
 	s.PriceUpdateHook(func(e *core.RecordEvent) error {
 		if s.CountPriceRecords(e.Record.GetString("product")) > 1 {
@@ -79,6 +55,7 @@ func AddMonitor(s *db.Server) {
 	})
 }
 
+// Add intial set of urls to database
 func AddURL(app core.App, url string, isProductUrl ...bool) {
 	collection, err := app.FindCollectionByNameOrId("urls")
 	if err != nil {
@@ -100,6 +77,7 @@ func AddURL(app core.App, url string, isProductUrl ...bool) {
 	}
 }
 
+// Add user to login
 func AddUser(app core.App, userdb string) {
 	collection, err := app.FindCollectionByNameOrId(userdb)
 	if err != nil {

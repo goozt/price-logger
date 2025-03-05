@@ -2,6 +2,8 @@ package db
 
 import (
 	"dilogger/internal/push"
+	"os"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
 	"github.com/pocketbase/pocketbase"
@@ -10,13 +12,20 @@ import (
 	"github.com/pocketbase/pocketbase/tools/types"
 )
 
+// New server is created
 func NewServer() *Server {
 	godotenv.Load()
 	app := pocketbase.New()
 	notifier := push.NewNotificationApp()
+	app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
+		// cleaning up PID file
+		os.Remove(filepath.Join(app.DataDir(), ".pid"))
+		return e.Next()
+	})
 	return &Server{app, nil, nil, nil, notifier, app.Logger()}
 }
 
+// Defines new collection
 func NewCollection(name string, args ...any) *core.Collection {
 	collection := core.NewBaseCollection(name)
 	collection.ListRule = types.Pointer("")

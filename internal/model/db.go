@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Product model
 type Product struct {
 	Id        string    `form:"id" json:"id"`
 	Name      string    `form:"name" json:"name"`

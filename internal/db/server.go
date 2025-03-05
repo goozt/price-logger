@@ -14,7 +14,7 @@ import (
 )
 
 type Server struct {
-	app               *pocketbase.PocketBase
+	App               *pocketbase.PocketBase
 	productCollection *core.Collection
 	priceCollection   *core.Collection
 	urlCollection     *core.Collection
@@ -22,27 +22,29 @@ type Server struct {
 	logger            *slog.Logger
 }
 
-func (s *Server) Start() {
-	if err := s.app.Start(); err != nil {
-		s.logger.Error(err.Error())
-		return
-	}
+// Cobra's AddCommand function extended
+func (s *Server) AddCobraCommand(cmds ...*cobra.Command) {
+	s.App.RootCmd.AddCommand(cmds...)
 }
 
+// Pocketbase OnServe hook extended
 func (s *Server) OnServe() *hook.Hook[*core.ServeEvent] {
-	return s.app.OnServe()
+	return s.App.OnServe()
 }
 
+// Pocketbase Logger extended
 func (s *Server) Logger() *slog.Logger {
 	return s.logger
 }
 
+// Pocketbase Cron function extended
 func (s *Server) Cron() *cron.Cron {
-	return s.app.Cron()
+	return s.App.Cron()
 }
 
+// Create new Url collection in database
 func (s *Server) NewUrlCollection() {
-	collection, err := s.app.FindCollectionByNameOrId("urls")
+	collection, err := s.App.FindCollectionByNameOrId("urls")
 	if err == nil {
 		s.urlCollection = collection
 		return
@@ -50,7 +52,7 @@ func (s *Server) NewUrlCollection() {
 		s.logger.Error(err.Error())
 	}
 	collection = NewCollection("urls")
-	err = s.app.Save(collection)
+	err = s.App.Save(collection)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return
@@ -58,11 +60,12 @@ func (s *Server) NewUrlCollection() {
 	s.urlCollection = collection
 }
 
+// Create new Product collection in database
 func (s *Server) NewProductCollection() {
 	if s.urlCollection == nil {
 		s.NewUrlCollection()
 	}
-	collection, err := s.app.FindCollectionByNameOrId("products")
+	collection, err := s.App.FindCollectionByNameOrId("products")
 	if err == nil {
 		s.productCollection = collection
 		return
@@ -70,7 +73,7 @@ func (s *Server) NewProductCollection() {
 		s.logger.Error(err.Error())
 	}
 	collection = NewCollection("products")
-	err = s.app.Save(collection)
+	err = s.App.Save(collection)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return
@@ -78,11 +81,12 @@ func (s *Server) NewProductCollection() {
 	s.productCollection = collection
 }
 
+// Create new Price Collection in database
 func (s *Server) NewPriceCollection() {
 	if s.productCollection == nil {
 		s.NewProductCollection()
 	}
-	collection, err := s.app.FindCollectionByNameOrId("prices")
+	collection, err := s.App.FindCollectionByNameOrId("prices")
 	if err == nil {
 		s.priceCollection = collection
 		return
@@ -90,7 +94,7 @@ func (s *Server) NewPriceCollection() {
 		s.logger.Error(err.Error())
 	}
 	collection = NewCollection("prices", s.productCollection.Id)
-	err = s.app.Save(collection)
+	err = s.App.Save(collection)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return
@@ -98,9 +102,10 @@ func (s *Server) NewPriceCollection() {
 	s.priceCollection = collection
 }
 
+// Get list of URLs from url database
 func (s *Server) GetURLs() []string {
 	var urls []string
-	records, err := s.app.FindAllRecords(s.urlCollection)
+	records, err := s.App.FindAllRecords(s.urlCollection)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return urls
@@ -111,13 +116,14 @@ func (s *Server) GetURLs() []string {
 	return urls
 }
 
+// Check for matching products with similar pricing in the database
 func (s *Server) PriceMatch(product model.Product) (*core.Record, *core.Record, bool) {
-	productRecord, err := s.app.FindFirstRecordByData("products", "name", product.Name)
+	productRecord, err := s.App.FindFirstRecordByData("products", "name", product.Name)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, nil, false
 	}
-	records, err := s.app.FindRecordsByFilter(
+	records, err := s.App.FindRecordsByFilter(
 		s.priceCollection.Name,
 		"product = {:product} && price = {:price}",
 		"-updated", 1, 0,
@@ -132,6 +138,7 @@ func (s *Server) PriceMatch(product model.Product) (*core.Record, *core.Record, 
 	return productRecord, records[0], true
 }
 
+// Add product data to the database
 func (s *Server) AddToCollection(products []model.Product) {
 	if s.priceCollection == nil || s.productCollection == nil {
 		s.NewPriceCollection()
@@ -148,7 +155,7 @@ func (s *Server) AddToCollection(products []model.Product) {
 				productRecord = core.NewRecord(s.productCollection)
 				productRecord.Set("name", product.Name)
 				productRecord.Set("stock", product.Stock)
-				err := s.app.Save(productRecord)
+				err := s.App.Save(productRecord)
 				if err != nil {
 					s.logger.Error(err.Error())
 					return
@@ -158,7 +165,7 @@ func (s *Server) AddToCollection(products []model.Product) {
 			record.Set("product", productRecord.Id)
 			record.Set("price", product.Price)
 		}
-		err := s.app.Save(record)
+		err := s.App.Save(record)
 		if err != nil {
 			s.logger.Error(err.Error())
 			return
@@ -166,19 +173,11 @@ func (s *Server) AddToCollection(products []model.Product) {
 	}
 }
 
-func (s *Server) AddCommand(command string, Fn func(app core.App)) {
-	s.app.RootCmd.AddCommand(&cobra.Command{
-		Use: command,
-		Run: func(cmd *cobra.Command, args []string) {
-			Fn(s.app)
-		},
-	})
-}
-
+// Update price when the hook is triggered
 func (s *Server) PriceUpdateHook(bindingFunction func(e *core.RecordEvent) error) {
-	s.app.OnRecordCreate("prices").BindFunc(func(e *core.RecordEvent) error {
+	s.App.OnRecordCreate("prices").BindFunc(func(e *core.RecordEvent) error {
 		price := e.Record.GetFloat("price")
-		existingRecords, err := s.app.FindRecordsByFilter(
+		existingRecords, err := s.App.FindRecordsByFilter(
 			"prices",
 			"product = {:product} && price = {:price}",
 			"-updated", 1, 0,
@@ -193,23 +192,24 @@ func (s *Server) PriceUpdateHook(bindingFunction func(e *core.RecordEvent) error
 		if len(existingRecords) > 0 {
 			existingRecord := existingRecords[0]
 			existingRecord.Set("price", price)
-			if err := s.app.Save(existingRecord); err != nil {
+			if err := s.App.Save(existingRecord); err != nil {
 				return err
 			}
 			return nil
 		}
 		return e.Next()
 	})
-	s.app.OnRecordAfterCreateSuccess("prices").BindFunc(bindingFunction)
+	s.App.OnRecordAfterCreateSuccess("prices").BindFunc(bindingFunction)
 }
 
+// Create Product object from product record
 func (s *Server) GetProduct(priceRecord *core.Record) model.Product {
 	var product model.Product
 	product.Id = priceRecord.Id
 	product.Price = priceRecord.GetFloat("price")
 	product.CreatedAt = priceRecord.GetDateTime("created").Time()
 	product.UpdatedAt = priceRecord.GetDateTime("updated").Time()
-	s.app.ExpandRecord(priceRecord, []string{"product"}, nil)
+	s.App.ExpandRecord(priceRecord, []string{"product"}, nil)
 	record := priceRecord.ExpandedOne("product")
 	if record == nil {
 		return model.Product{}
@@ -219,8 +219,9 @@ func (s *Server) GetProduct(priceRecord *core.Record) model.Product {
 	return product
 }
 
+// Count the number of records with same product id inside prices collection
 func (s *Server) CountPriceRecords(productId string) int64 {
-	count, err := s.app.CountRecords("prices", dbx.HashExp{"product": productId})
+	count, err := s.App.CountRecords("prices", dbx.HashExp{"product": productId})
 	if err != nil {
 		s.logger.Error(err.Error())
 		return 0

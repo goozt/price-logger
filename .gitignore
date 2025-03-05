@@ -1,4 +1,6 @@
 .env
+.pid
 dist/
 pb_data/
 server
+dilogger

@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -25,7 +24,7 @@ func GetEnv(key string, fallback ...string) string {
 func IsSUDO() bool {
 	stdout, err := exec.Command("ps", "-o", "user=", "-p", strconv.Itoa(os.Getpid())).Output()
 	if err != nil {
-		fmt.Println("Access denied")
+		log.Println("access denied", err)
 		os.Exit(1)
 	}
 	return strings.TrimSpace(string(stdout)) == "root"
@@ -35,8 +34,7 @@ func IsSUDO() bool {
 func CopyFile(src, dst string) {
 	err := exec.Command("cp", "-rf", src, dst).Run()
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Unable to copy files")
+		log.Println("unable to copy files:", err)
 		os.Exit(1)
 	}
 }

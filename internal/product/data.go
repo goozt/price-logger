@@ -31,6 +31,7 @@ func GetProducts(urls []string) (products []model.Product) {
 	return
 }
 
+// Reload data from urls and add to database
 func ReloadData(server *db.Server) {
 	urls := server.GetURLs()
 	server.AddToCollection(GetProducts(urls))

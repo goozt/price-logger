@@ -26,6 +26,7 @@ type OneSignalApp struct {
 	segments []string
 }
 
+// Create new OneSignal App
 func NewNotificationApp() *OneSignalApp {
 	return &OneSignalApp{
 		utils.GetEnv("OS_APP_ID"),

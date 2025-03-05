@@ -8,21 +8,18 @@ reset:
 	@rm -rf ./pb_data ./dist
 
 build:
-	@rm -rf ./dist/
 	@go build -o ./dist/server
-	@go build -C internal/cli/install -o ../../../dist/
-	@go build -C internal/cli/uninstall -o ../../../dist/
+	@./dist/server init
 
-prod-build:
-	@rm -rf ./dist/
-	@go build -o ./server
-	@./server init
+prod:
+	@./dist/server start --http=0.0.0.0:8080
 
-prod-run:
-	@./server serve --http=0.0.0.0:8080 --encryptionEnv ${PB_DATA_ENCRYPTION_KEY}
+stop:
+	@./dist/server stop --port=8080
 
-uninstall:
-	@cd dist && sudo ./uninstall
+serve:
+	@./dist/server serve --http=0.0.0.0:8080
 
-install: build uninstall
-	@cd dist && sudo ./install
+test: stop reset build prod
+
+.PHONY: run init reset build prod stop serve test
