@@ -32,8 +32,5 @@ func Run() {
 		AddURL(app, "https://www.designinfo.in/wishlist/view/da0c1e/")
 		product.ReloadData(server)
 	})
-	// AddHourlyJob(server, "pricemonitor", func(s *db.Server) {
-	// 	monitor.MonitorPriceChanges(s)
-	// })
 	server.Start()
 }
