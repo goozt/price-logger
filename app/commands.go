@@ -198,14 +198,13 @@ func NewStartCommand(app core.App, showStartBanner bool) *cobra.Command {
 			if httpAddr != "" {
 				cmd.Args = append(cmd.Args, "--http", httpAddr)
 			}
-			if len(args) > 0 {
-				if httpsAddr != "" {
-					cmd.Args = append(cmd.Args, "--https", httpsAddr)
-				}
-				if len(allowedOrigins) > 0 {
-					cmd.Args = append(cmd.Args, slices.Insert(allowedOrigins, 0, "--origins")...)
-				}
+			if httpsAddr != "" {
+				cmd.Args = append(cmd.Args, "--https", httpsAddr)
 			}
+			if len(allowedOrigins) > 0 {
+				cmd.Args = append(cmd.Args, slices.Insert(allowedOrigins, 0, "--origins")...)
+			}
+
 			stdinPipe, err := cmd.StdinPipe()
 			if err != nil {
 				return fmt.Errorf("creating stdin pipe: %v", err)

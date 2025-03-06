@@ -48,8 +48,6 @@ func (s *Server) NewUrlCollection() {
 	if err == nil {
 		s.urlCollection = collection
 		return
-	} else {
-		s.logger.Error(err.Error())
 	}
 	collection = NewCollection("urls")
 	err = s.App.Save(collection)
@@ -69,8 +67,6 @@ func (s *Server) NewProductCollection() {
 	if err == nil {
 		s.productCollection = collection
 		return
-	} else {
-		s.logger.Error(err.Error())
 	}
 	collection = NewCollection("products")
 	err = s.App.Save(collection)
@@ -90,8 +86,6 @@ func (s *Server) NewPriceCollection() {
 	if err == nil {
 		s.priceCollection = collection
 		return
-	} else {
-		s.logger.Error(err.Error())
 	}
 	collection = NewCollection("prices", s.productCollection.Id)
 	err = s.App.Save(collection)
@@ -120,7 +114,6 @@ func (s *Server) GetURLs() []string {
 func (s *Server) PriceMatch(product model.Product) (*core.Record, *core.Record, bool) {
 	productRecord, err := s.App.FindFirstRecordByData("products", "name", product.Name)
 	if err != nil {
-		s.logger.Error(err.Error())
 		return nil, nil, false
 	}
 	records, err := s.App.FindRecordsByFilter(
